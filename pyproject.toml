@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spraybiclique"
-version = "0.9"
-description = "Biclique witness detection for distributed authentication abuse."
+version = "0.9.1"
+description = "Explainable biclique witness detection for distributed authentication abuse."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -14,11 +14,24 @@ authors = [
 maintainers = [
     { name = "Team JRTI" },
 ]
+keywords = ["auth-detection", "cybersecurity", "graph-analytics", "password-spray", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+]
 dependencies = [
     "fastapi",
     "python-multipart",
     "uvicorn",
 ]
+
+[project.urls]
+Repository = "https://github.com/jbaelaw/spraybiclique"
 
 [project.optional-dependencies]
 dev = [

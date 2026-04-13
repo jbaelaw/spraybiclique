@@ -1,35 +1,76 @@
 # SprayBiclique
 
-`SprayBiclique` is a small local API for spotting distributed authentication abuse by looking for a minimum witness structure instead of relying on per-IP thresholds.
+Explainable biclique witness detection for distributed authentication abuse.
 
-Maintained by `Team JRTI`. Current release target: `0.9`.
+Maintained by `Team JRTI`. Current release target: `0.9.1`.
 
-The detector uses a Ramsey-style graph heuristic: noisy authentication traffic always contains some structure, so the tool only raises an alert when two rare sources form a same-pattern witness over a shared account set. In the first release that witness is a `K2,4`-style biclique: two sources, four or more shared accounts, and one homogeneous failure pattern.
+## Overview
 
-## Why This Is Different
+`SprayBiclique` is a small local API that detects distributed password spray and related authentication abuse by searching for a minimum witness structure instead of relying on per-source volume thresholds.
 
-- Most password spray detections ask whether one source touched many accounts.
-- `SprayBiclique` asks whether multiple low-volume sources touched the same account set in the same way.
-- Each alert is explainable as a concrete subgraph witness instead of a black-box anomaly score.
+The detector uses a Ramsey-style graph heuristic in an operational sense. Authentication traffic is noisy and naturally forms some structure, so the scanner only emits an alert when two low-degree sources create a homogeneous witness over a shared set of accounts. In the current release that witness is a `K2,4`-style biclique: two sources, four or more shared accounts, and one consistent failure pattern.
 
-The project uses a practical Ramsey-style heuristic rather than formal Ramsey-bound calculations. The focus is operational value: use homogeneous witness subgraphs as the alert boundary.
+## Detection Model
 
-## MVP Features
+`SprayBiclique` processes each short time window as a source-account bipartite graph.
 
-- Vendor-neutral JSONL authentication schema
-- `K2,4` witness detection for `fail_same_code`, `fail_unknown_user`, and `fail_unspecified`
-- Severity boosts for `success_after_fail`
-- Trusted source suppression for shared proxies or known infrastructure
-- FastAPI endpoint that returns JSON plus a Markdown summary
+- Nodes:
+  - Source nodes represent IPs, devices, or upstream source buckets.
+  - Account nodes represent target identities.
+- Edge patterns:
+  - `fail_same_code`
+  - `fail_unknown_user`
+  - `fail_unspecified`
+- Witness rule:
+  - Raise a candidate when two low-degree sources share at least four accounts under one edge pattern.
+- Score components:
+  - witness size
+  - source rarity
+  - temporal tightness
+  - optional `success_after_fail` follow-up boost
+  - trusted-source suppression
+
+This project does not attempt formal Ramsey-bound computation. The practical contribution is the alert boundary: a homogeneous witness subgraph that is small, explainable, and suitable for investigation.
+
+## Why It Is Different
+
+- Traditional password spray analytics usually focus on one source touching many accounts.
+- `SprayBiclique` focuses on multiple low-volume sources touching the same account set in the same way.
+- Each alert is directly explainable as a witness subgraph instead of a black-box anomaly score.
+
+## API
+
+### Endpoints
+
+- `GET /health`
+  - Returns a basic service health response.
+- `POST /scan`
+  - Accepts either JSON events or a JSONL file upload.
+  - Returns structured alert data plus a Markdown summary.
+
+### Supported Request Types
+
+- `application/json`
+  - Body shape: `{ "events": [...], "config": {...} }`
+  - Event aliases are accepted in this path.
+- `multipart/form-data`
+  - Required form field: `file`
+  - Optional form field: `config`
+  - `config` may be submitted as a text JSON string or as a JSON part.
 
 ## Input Schema
 
-Each JSONL record must provide these canonical fields or one of their accepted aliases:
+Each event must contain the following fields, either in canonical form or through one of the accepted aliases.
 
-- `timestamp` (`time`, `ts`)
-- `src` (`source`, `source_ip`, `client_ip`, `ip`)
-- `user` (`username`, `account`, `target_user`, `principal`)
-- `result` (`status`, `outcome`) with values like `success`, `failure`, `ok`, `failed`
+- `timestamp`
+  - aliases: `time`, `ts`
+- `src`
+  - aliases: `source`, `source_ip`, `client_ip`, `ip`
+- `user`
+  - aliases: `username`, `account`, `target_user`, `principal`
+- `result`
+  - aliases: `status`, `outcome`
+  - accepted normalized values include `success`, `failure`, `ok`, `failed`
 
 Optional fields:
 
@@ -37,55 +78,32 @@ Optional fields:
 - `user_agent`
 - `app`
 
-Example:
+Example event:
 
 ```json
-{"timestamp":"2026-04-13T09:00:00Z","src":"203.0.113.10","user":"alice","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0"}
+{
+  "timestamp": "2026-04-13T09:00:00Z",
+  "src": "203.0.113.10",
+  "user": "alice",
+  "result": "failure",
+  "failure_code": "INVALID_PASSWORD",
+  "user_agent": "curl/8.0",
+  "app": "vpn"
+}
 ```
 
-## Run Locally
+## Output
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn spraybiclique.api:app --reload
-```
+The `POST /scan` response contains three top-level fields.
 
-The API will be available at `http://127.0.0.1:8000`.
+- `stats`
+  - counts for scanned events, windows, witness candidates, emitted alerts, and suppressed candidates
+- `alerts`
+  - the final unsuppressed witness alerts
+- `markdown_summary`
+  - a ready-to-share text summary of the scan
 
-## Scan With JSON
-
-```bash
-curl -X POST "http://127.0.0.1:8000/scan" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "config": {
-      "window_minutes": 10,
-      "min_shared_accounts": 4,
-      "trusted_sources": ["198.51.100.10"]
-    },
-    "events": [
-      {
-        "timestamp": "2026-04-13T09:00:00Z",
-        "src": "203.0.113.10",
-        "user": "alice",
-        "result": "failure",
-        "failure_code": "INVALID_PASSWORD"
-      }
-    ]
-  }'
-```
-
-## Scan With JSONL Upload
-
-```bash
-curl -X POST "http://127.0.0.1:8000/scan" \
-  -F "file=@examples/auth_sample.jsonl" \
-  -F 'config={"window_minutes":10,"min_shared_accounts":4};type=application/json'
-```
-
-## Sample Alert Shape
+Sample alert:
 
 ```json
 {
@@ -101,17 +119,67 @@ curl -X POST "http://127.0.0.1:8000/scan" \
 }
 ```
 
-## Detection Logic
+## Quick Start
 
-1. Normalize incoming auth events into a common schema.
-2. Slice events into short windows.
-3. Color each failure edge by a coarse auth pattern.
-4. Build a source-account bipartite graph per window.
-5. Emit an alert when two low-degree sources share at least four accounts under one homogeneous pattern.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn spraybiclique.api:app --reload
+```
+
+The API is then available at `http://127.0.0.1:8000`.
+
+### Scan With JSON
+
+```bash
+curl -X POST "http://127.0.0.1:8000/scan" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "window_minutes": 10,
+      "min_shared_accounts": 4,
+      "trusted_sources": ["198.51.100.10"]
+    },
+    "events": [
+      {
+        "time": "2026-04-13T09:00:00Z",
+        "source_ip": "203.0.113.10",
+        "username": "alice",
+        "status": "failed",
+        "reason": "invalid_password"
+      }
+    ]
+  }'
+```
+
+### Scan With JSONL Upload
+
+```bash
+curl -X POST "http://127.0.0.1:8000/scan" \
+  -F "file=@examples/auth_sample.jsonl" \
+  -F 'config={"window_minutes":10,"min_shared_accounts":4}'
+```
+
+## Operational Notes
+
+- Shared proxies, NAT gateways, and SSO outages can still create misleading structure if they are not allowlisted.
+- The current release is intentionally narrow: `K2,4` witnesses, a small set of failure patterns, and short-window batch analysis.
+- This service is designed as a triage aid, not a replacement for full SIEM correlation or identity analytics.
+
+## Development
+
+Run the local test suite with:
+
+```bash
+source .venv/bin/activate
+pytest
+```
 
 ## Repository Layout
 
 ```text
+CHANGELOG.md
 src/spraybiclique/api.py
 src/spraybiclique/schema.py
 src/spraybiclique/normalize.py

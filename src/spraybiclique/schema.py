@@ -47,7 +47,7 @@ class AuthEvent(BaseModel):
         if value is None:
             return None
         normalized = str(value).strip()
-        return normalized or None
+        return normalized.upper() or None
 
 
 class ScanConfig(BaseModel):
