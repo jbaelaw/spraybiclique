@@ -1,8 +1,9 @@
 """SprayBiclique package."""
 
 from .api import app
+from .meta import AUTHOR, VERSION
 
-__version__ = "0.9.1"
-__author__ = "Team JRTI"
+__version__ = VERSION
+__author__ = AUTHOR
 
 __all__ = ["app", "__version__", "__author__"]

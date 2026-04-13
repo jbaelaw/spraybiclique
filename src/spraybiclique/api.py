@@ -6,20 +6,33 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 
 from .detect import scan_events
+from .meta import APP_NAME, REPOSITORY_URL, VERSION
 from .normalize import normalize_events, parse_jsonl_text
 from .report import build_markdown_summary
 from .schema import ScanConfig, ScanResponse
 
 app = FastAPI(
-    title="SprayBiclique",
-    version="0.9.1",
+    title=APP_NAME,
+    version=VERSION,
     summary="Explainable biclique witness detection for distributed authentication abuse.",
 )
 
 
+@app.get("/")
+def index() -> dict[str, str]:
+    return {
+        "name": APP_NAME,
+        "version": VERSION,
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "scan_url": "/scan",
+        "repository": REPOSITORY_URL,
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "service": APP_NAME, "version": VERSION}
 
 
 async def _load_config(config_raw: object | None) -> ScanConfig:

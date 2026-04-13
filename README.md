@@ -1,8 +1,10 @@
 # SprayBiclique
 
+[![CI](https://github.com/jbaelaw/spraybiclique/actions/workflows/ci.yml/badge.svg)](https://github.com/jbaelaw/spraybiclique/actions/workflows/ci.yml)
+
 Explainable biclique witness detection for distributed authentication abuse.
 
-Maintained by `Team JRTI`. Current release target: `0.9.1`.
+Maintained by `Team JRTI`. Current release target: `0.10.0`.
 
 ## Overview
 
@@ -38,12 +40,58 @@ This project does not attempt formal Ramsey-bound computation. The practical con
 - `SprayBiclique` focuses on multiple low-volume sources touching the same account set in the same way.
 - Each alert is directly explainable as a witness subgraph instead of a black-box anomaly score.
 
+## Interfaces
+
+`SprayBiclique` can be used in two ways.
+
+- CLI
+  - scan a JSONL file directly from the terminal
+  - write JSON or Markdown results to stdout or a file
+- HTTP API
+  - run a local FastAPI service for integrations or ad hoc uploads
+
+## Installation
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+## CLI
+
+### Scan a JSONL file
+
+```bash
+spraybiclique scan examples/auth_sample.jsonl
+```
+
+### Emit JSON instead of Markdown
+
+```bash
+spraybiclique scan examples/auth_sample.jsonl --format json
+```
+
+### Write scan output to a file
+
+```bash
+spraybiclique scan examples/auth_sample.jsonl --output report.md
+```
+
+### Run the API service
+
+```bash
+spraybiclique serve --host 127.0.0.1 --port 8000
+```
+
 ## API
 
 ### Endpoints
 
+- `GET /`
+  - Returns service metadata, version, and useful endpoint paths.
 - `GET /health`
-  - Returns a basic service health response.
+  - Returns service status, service name, and version.
 - `POST /scan`
   - Accepts either JSON events or a JSONL file upload.
   - Returns structured alert data plus a Markdown summary.
@@ -122,10 +170,7 @@ Sample alert:
 ## Quick Start
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn spraybiclique.api:app --reload
+spraybiclique serve --host 127.0.0.1 --port 8000
 ```
 
 The API is then available at `http://127.0.0.1:8000`.
@@ -176,11 +221,18 @@ source .venv/bin/activate
 pytest
 ```
 
+## Continuous Integration
+
+GitHub Actions runs the test suite on Python `3.11`, `3.12`, and `3.13` for pushes and pull requests targeting `main`.
+
 ## Repository Layout
 
 ```text
 CHANGELOG.md
+.github/workflows/ci.yml
 src/spraybiclique/api.py
+src/spraybiclique/cli.py
+src/spraybiclique/meta.py
 src/spraybiclique/schema.py
 src/spraybiclique/normalize.py
 src/spraybiclique/detect.py

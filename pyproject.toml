@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spraybiclique"
-version = "0.9.1"
+version = "0.10.0"
 description = "Explainable biclique witness detection for distributed authentication abuse."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,6 +32,9 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/jbaelaw/spraybiclique"
+
+[project.scripts]
+spraybiclique = "spraybiclique.cli:main"
 
 [project.optional-dependencies]
 dev = [
