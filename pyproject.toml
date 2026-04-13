@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spraybiclique"
+version = "0.9"
+description = "Biclique witness detection for distributed authentication abuse."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Team JRTI" },
+]
+maintainers = [
+    { name = "Team JRTI" },
+]
+dependencies = [
+    "fastapi",
+    "python-multipart",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx",
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

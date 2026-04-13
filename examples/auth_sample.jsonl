@@ -1,0 +1,12 @@
+{"timestamp":"2026-04-13T09:00:00Z","src":"203.0.113.10","user":"alice","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:00:30Z","src":"203.0.113.11","user":"alice","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:01:00Z","src":"203.0.113.10","user":"bob","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:01:30Z","src":"203.0.113.11","user":"bob","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:02:00Z","src":"203.0.113.10","user":"carol","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:02:30Z","src":"203.0.113.11","user":"carol","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:03:00Z","src":"203.0.113.10","user":"dave","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:03:30Z","src":"203.0.113.11","user":"dave","result":"failure","failure_code":"INVALID_PASSWORD","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:05:30Z","src":"203.0.113.11","user":"alice","result":"success","user_agent":"curl/8.0","app":"vpn"}
+{"timestamp":"2026-04-13T09:06:00Z","src":"198.51.100.20","user":"erin","result":"failure","failure_code":"PASSWORD_EXPIRED","user_agent":"Okta Verify","app":"sso"}
+{"timestamp":"2026-04-13T09:06:20Z","src":"198.51.100.20","user":"frank","result":"failure","failure_code":"PASSWORD_EXPIRED","user_agent":"Okta Verify","app":"sso"}
+{"timestamp":"2026-04-13T09:07:00Z","src":"198.51.100.21","user":"erin","result":"failure","failure_code":"MFA_REQUIRED","user_agent":"Chrome","app":"sso"}
